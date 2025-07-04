@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=pcpartsdb'
+      - 'POSTGRES_PASSWORD=pcparts_password'
+      - 'POSTGRES_USER=pcparts_user'
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+
+  redis:
+    image: 'redis:latest'
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'redis_data:/data'
+
+  # scraper:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '8080:8080'
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   environment:
+  #     - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/pcpartsdb'
+  #     - 'SPRING_DATASOURCE_USERNAME=pcparts_user'
+  #     - 'SPRING_DATASOURCE_PASSWORD=pcparts_password'
+
+volumes:
+  postgres_data:
+  redis_data:
+

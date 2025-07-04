@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PC Parts Scraper</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        /* Remove all border-radius */
+        * {
+            border-radius: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="min-h-screen flex flex-col max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <a href="/" class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                            PC Parts Scraper
+                        </a>
+                    </div>
+
+                    <nav class="flex space-x-4">
+                        <a href="/"
+                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
+                            Dashboard
+                        </a>
+                        <a href="/parts"
+                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
+                            Browse Parts
+                        </a>
+                        <a href="/baskets"
+                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
+                            My Baskets
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+            <div class="space-y-8">
+                <!-- Header -->
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+                    <div class="flex space-x-3">
+                        <a href="/parts"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+                            Browse All Parts
+                        </a>
+                        <a href="/baskets"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+                            My Baskets
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div
+                        class="bg-white dark:bg-gray-800 overflow-hidden shadow border border-gray-200 dark:border-gray-700">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-blue-500 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total
+                                            Parts</dt>
+                                        <dd class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                                            th:text="${totalParts}">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 overflow-hidden shadow border border-gray-200 dark:border-gray-700">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-green-500 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">New
+                                            Today</dt>
+                                        <dd class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                                            th:text="${recentParts}">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 overflow-hidden shadow border border-gray-200 dark:border-gray-700">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-purple-500 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M10 2L3 7v11a1 1 0 001 1h12a1 1 0 001-1V7l-7-5zM8 15v-3a1 1 0 011-1h2a1 1 0 011 1v3H8z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                                            Categories</dt>
+                                        <dd class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                                            th:text="${#arrays.length(partTypes)}">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 overflow-hidden shadow border border-gray-200 dark:border-gray-700">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-orange-500 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                                            Marketplaces</dt>
+                                        <dd class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                                            th:text="${#lists.size(partCountsByMarketplace)}">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Category Overview -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Parts by Type -->
+                    <div class="bg-white dark:bg-gray-800 shadow border border-gray-200 dark:border-gray-700">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Parts by Category
+                            </h3>
+                            <div class="mt-4 space-y-3">
+                                <div th:each="typeCount : ${partCountsByType}"
+                                    class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400"
+                                        th:text="${typeCount[0].displayName}">Category</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                                        th:text="${typeCount[1]}">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Latest Parts -->
+                    <div class="bg-white dark:bg-gray-800 shadow border border-gray-200 dark:border-gray-700">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Latest Parts</h3>
+                            <div class="mt-4 space-y-3">
+                                <div th:each="part : ${latestParts}" class="flex justify-between items-start">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
+                                            th:text="${part.title}">Part Title</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400"
+                                            th:text="${part.partType.displayName}">Category</p>
+                                    </div>
+                                    <div class="flex-shrink-0 ml-2">
+                                        <span class="text-sm font-medium text-green-600 dark:text-green-400"
+                                            th:text="${part.price + ' ' + part.currency}">0 CZK</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <a href="/parts"
+                                    class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
+                                    View all parts →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white dark:bg-gray-800 shadow border border-gray-200 dark:border-gray-700">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Quick Actions</h3>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <a th:each="partType : ${partTypes}" th:href="@{/parts(partType=${partType})}"
+                                class="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 p-4 text-center transition-colors">
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                                    th:text="${partType.displayName}">Category</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 sm:px-6 lg:px-8 py-4">
+                <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+                    <p>&copy; 2024 PC Parts Scraper. Built with Spring Boot + HTMX + Tailwind CSS.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Dark mode toggle -->
+    <div class="fixed bottom-4 right-4"
+        x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches) }"
+        x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); if (val) { document.documentElement.classList.add('dark') } else { document.documentElement.classList.remove('dark') } })"
+        x-cloak>
+        <button @click="darkMode = !darkMode"
+            class="bg-gray-200 dark:bg-gray-700 p-3 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+            <svg x-show="!darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                    clip-rule="evenodd" />
+            </svg>
+            <svg x-show="darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+            </svg>
+        </button>
+    </div>
+</body>
+
+</html>

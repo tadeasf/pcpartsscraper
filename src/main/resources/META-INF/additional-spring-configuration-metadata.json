@@ -1,0 +1,34 @@
+{
+    "properties": [
+        {
+            "name": "app.scraping.enabled",
+            "type": "java.lang.Boolean",
+            "description": "Enable or disable scraping functionality"
+        },
+        {
+            "name": "app.scraping.bazos.interval-hours",
+            "type": "java.lang.Integer",
+            "description": "Interval in hours between scraping runs for each category"
+        },
+        {
+            "name": "app.scraping.bazos.stagger-start",
+            "type": "java.lang.Boolean",
+            "description": "Whether to stagger the start times of category scraping jobs"
+        },
+        {
+            "name": "app.scraping.bazos.max-concurrent-categories",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of categories to scrape concurrently"
+        },
+        {
+            "name": "app.scraping.bazos.duplicate-stop-threshold",
+            "type": "java.lang.Double",
+            "description": "Stop scraping when this ratio of parts on a page are duplicates (0.8 = 80%)"
+        },
+        {
+            "name": "app.scraping.bazos.min-new-parts-threshold",
+            "type": "java.lang.Integer",
+            "description": "Stop scraping when fewer than this many new parts found on a page"
+        }
+    ]
+}
