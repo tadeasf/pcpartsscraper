@@ -45,10 +45,9 @@ public class Part {
     @Column(nullable = false)
     private PartType partType;
 
-    @NotNull
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = true, precision = 10, scale = 2)
     @PositiveOrZero
-    private BigDecimal price;
+    private BigDecimal price; // Null when price is "v textu" (negotiable/contact seller)
 
     @Builder.Default
     @Column(length = 3)

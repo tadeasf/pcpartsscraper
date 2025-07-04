@@ -38,6 +38,8 @@ public class Bazos {
 
     private static final String BASE_URL = "https://pc.bazos.cz";
     private static final Pattern PRICE_PATTERN = Pattern.compile("(\\d+(?:\\s*\\d*)*)\\s*Kč");
+    private static final Pattern PRICE_IN_TEXT_PATTERN = Pattern
+            .compile("(?i)cena\\s*[:\\-]?\\s*(\\d+(?:\\s*\\d*)*)\\s*(?:kč|czk|,-)", Pattern.CASE_INSENSITIVE);
     private static final Pattern ID_PATTERN = Pattern.compile("/inzerat/(\\d+)/");
     private static final Pattern LOCATION_PATTERN = Pattern.compile("([A-Za-z\\s]+)(\\d{3}\\s*\\d{2})");
     private static final Pattern DATE_PATTERN = Pattern.compile("\\[(\\d+\\.\\d+\\.\\s*\\d+)\\]");
@@ -47,9 +49,6 @@ public class Bazos {
 
     @Value("${app.scraping.bazos.duplicate-stop-threshold:0.8}")
     private double duplicateStopThreshold;
-
-    @Value("${app.scraping.bazos.min-new-parts-threshold:5}")
-    private int minNewPartsThreshold;
 
     // Updated category mappings based on actual Bazos.cz URLs
     private static final Map<Part.PartType, String> CATEGORY_MAPPINGS = new HashMap<>();
@@ -74,6 +73,11 @@ public class Bazos {
         CATEGORY_MAPPINGS.put(Part.PartType.AUDIO_CARD, "sound"); // audio cards
     }
 
+    // Reuse connection for better performance
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+    private static final int CONNECT_TIMEOUT = 10000; // Reduced from 15000 - this applies to both connect and read
+                                                      // timeouts
+
     public void scrapeCategory(Part.PartType partType, String categoryPath) {
         if (!scrapingEnabled) {
             log.info("Scraping is disabled, skipping {}", partType);
@@ -87,19 +91,17 @@ public class Bazos {
             boolean hasMorePages = true;
             int totalScraped = 0;
 
-            while (hasMorePages && page <= 20) { // Limit to 20 pages per run
+            while (hasMorePages && page <= 500) { // Safety limit to prevent infinite loops
                 String url = buildUrl(categoryPath, page);
                 log.debug("Scraping page {} for {}: {}", page, partType, url);
 
                 Document doc = Jsoup.connect(url)
-                        .userAgent(
-                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                        .timeout(15000)
+                        .userAgent(USER_AGENT)
+                        .timeout(CONNECT_TIMEOUT)
                         .followRedirects(true)
                         .get();
 
-                // Extract listings from the page text - Bazos uses a complex table structure
-                String pageText = doc.body().text();
+                doc.body().text();
                 List<String> listingUrls = extractListingUrls(doc);
 
                 if (listingUrls.isEmpty()) {
@@ -116,7 +118,7 @@ public class Bazos {
                         if (part != null) {
                             pageScrapedParts.add(part);
                         }
-                        Thread.sleep(500); // Be respectful between individual requests
+                        Thread.sleep(200); // Reduced from 500ms to 200ms for better performance
                     } catch (Exception e) {
                         log.warn("Error scraping individual listing {}: {}", listingUrl, e.getMessage());
                     }
@@ -146,17 +148,31 @@ public class Bazos {
                         log.info("Stopping scraping for {} - database duplicate ratio {:.1%} exceeds threshold {:.1%}",
                                 partType, databaseDuplicateRatio, duplicateStopThreshold);
                         shouldStopEarly = true;
-                    } else if (result.saved < minNewPartsThreshold) {
-                        log.info("Stopping scraping for {} - only {} new parts found, below threshold {}",
-                                partType, result.saved, minNewPartsThreshold);
-                        shouldStopEarly = true;
                     }
                 }
 
-                // Check if there's a next page
-                hasMorePages = pageText.contains("Další") && !listingUrls.isEmpty() && !shouldStopEarly;
+                // Check if there's a next page by looking for "Další" link in DOM structure
+                // First check for specific next page URL pattern, then check link text
+                boolean hasNextPageLink = doc.select("a[href*='" + categoryPath + "/" + ((page + 1) * 20) + "']")
+                        .size() > 0;
+
+                if (!hasNextPageLink) {
+                    // Check for "Další" text in links as fallback
+                    hasNextPageLink = doc.select("a").stream()
+                            .anyMatch(link -> {
+                                String linkText = link.text().toLowerCase();
+                                return linkText.contains("další") || linkText.contains("next");
+                            });
+                }
+
+                hasMorePages = hasNextPageLink && !listingUrls.isEmpty() && !shouldStopEarly;
+
+                if (!hasMorePages && !shouldStopEarly) {
+                    log.info("No next page found for {} on page {} - stopping pagination", partType, page);
+                }
+
                 page++;
-                Thread.sleep(2000); // Be respectful between pages
+                Thread.sleep(1500); // Reduced from 2000ms to 1500ms for better performance
             }
 
             log.info("Scraped and saved {} new parts for {}", totalScraped, partType);
@@ -185,7 +201,8 @@ public class Bazos {
                 log.debug("Found {} duplicate parts within the same page", intraBatchDuplicates);
             }
 
-            // Step 2: Check against database for existing parts
+            // Step 2: Check against database for existing parts in batches for better
+            // performance
             Set<String> uniqueHashes = dedupedParts.stream()
                     .map(Part::getUniqueHash)
                     .collect(java.util.stream.Collectors.toSet());
@@ -200,26 +217,36 @@ public class Bazos {
             int databaseDuplicates = dedupedParts.size() - newParts.size();
             int actuallyInserted = 0;
 
-            // Step 4: Insert new parts
+            // Step 4: Insert new parts using batch processing for better performance
             if (!newParts.isEmpty()) {
+                // Set timestamps for all parts before batch insert
+                LocalDateTime now = LocalDateTime.now();
                 for (Part part : newParts) {
-                    try {
-                        // Ensure timestamps are set (since we're not using @PrePersist)
-                        if (part.getScrapedAt() == null) {
-                            part.setScrapedAt(LocalDateTime.now());
-                        }
-                        if (part.getUpdatedAt() == null) {
-                            part.setUpdatedAt(LocalDateTime.now());
-                        }
+                    if (part.getScrapedAt() == null) {
+                        part.setScrapedAt(now);
+                    }
+                    if (part.getUpdatedAt() == null) {
+                        part.setUpdatedAt(now);
+                    }
+                }
 
-                        // Check once more if it exists (to handle race conditions)
-                        if (!partRepository.existsByUniqueHash(part.getUniqueHash())) {
-                            partRepository.save(part);
-                            actuallyInserted++;
+                try {
+                    // Use saveAll for batch processing
+                    List<Part> savedParts = partRepository.saveAll(newParts);
+                    actuallyInserted = savedParts.size();
+                } catch (Exception e) {
+                    log.warn("Batch insert failed, falling back to individual inserts: {}", e.getMessage());
+                    // Fallback to individual inserts if batch fails
+                    for (Part part : newParts) {
+                        try {
+                            if (!partRepository.existsByUniqueHash(part.getUniqueHash())) {
+                                partRepository.save(part);
+                                actuallyInserted++;
+                            }
+                        } catch (Exception ex) {
+                            log.debug("Failed to insert part (likely duplicate): {} - {}", part.getUniqueHash(),
+                                    ex.getMessage());
                         }
-                    } catch (Exception e) {
-                        log.debug("Failed to insert part (likely duplicate): {} - {}", part.getUniqueHash(),
-                                e.getMessage());
                     }
                 }
             }
@@ -302,9 +329,8 @@ public class Bazos {
     private Part scrapeIndividualListing(String url, Part.PartType partType) {
         try {
             Document doc = Jsoup.connect(url)
-                    .userAgent(
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                    .timeout(15000)
+                    .userAgent(USER_AGENT)
+                    .timeout(CONNECT_TIMEOUT)
                     .followRedirects(true)
                     .get();
 
@@ -321,10 +347,10 @@ public class Bazos {
                 return null;
             }
 
-            // Extract price
+            // Extract price (null is allowed for "v textu" cases)
             BigDecimal price = extractPrice(pageText);
-            if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
-                return null;
+            if (price != null && price.compareTo(BigDecimal.ZERO) <= 0) {
+                return null; // Reject only negative prices, allow null and positive prices
             }
 
             // Extract location
@@ -346,7 +372,8 @@ public class Bazos {
             // Check if promoted
             Boolean isPromoted = pageText.contains("TOP");
 
-            String uniqueHash = generateUniqueHash("bazos", externalId, title, price.toString());
+            String uniqueHash = generateUniqueHash("bazos", externalId, title,
+                    price != null ? price.toString() : "null");
 
             LocalDateTime now = LocalDateTime.now();
             return Part.builder()
@@ -448,15 +475,37 @@ public class Bazos {
     }
 
     private BigDecimal extractPrice(String text) {
+        // First try the standard price pattern
         Matcher matcher = PRICE_PATTERN.matcher(text);
         if (matcher.find()) {
             try {
                 String priceStr = matcher.group(1).replaceAll("\\s+", "");
                 return new BigDecimal(priceStr);
             } catch (NumberFormatException e) {
-                return null;
+                // Continue to try other patterns
             }
         }
+
+        // Try to find price in text format (e.g., "cena: 5000 Kč", "cena v textu")
+        Matcher textMatcher = PRICE_IN_TEXT_PATTERN.matcher(text);
+        if (textMatcher.find()) {
+            try {
+                String priceStr = textMatcher.group(1).replaceAll("\\s+", "");
+                return new BigDecimal(priceStr);
+            } catch (NumberFormatException e) {
+                // Continue to other patterns
+            }
+        }
+
+        // If we find "v textu" but no price, return null to indicate undefined price
+        // This allows items with negotiable/text-based pricing to be included with null
+        // price
+        if (text.toLowerCase().contains("v textu") || text.toLowerCase().contains("dohodou") ||
+                text.toLowerCase().contains("na dotaz")) {
+            log.debug("Found text-based pricing, price will be stored as null");
+            return null; // Null value to indicate "price in text" - price undefined
+        }
+
         return null;
     }
 

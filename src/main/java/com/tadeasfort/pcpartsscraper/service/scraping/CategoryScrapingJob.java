@@ -2,15 +2,14 @@ package com.tadeasfort.pcpartsscraper.service.scraping;
 
 import com.tadeasfort.pcpartsscraper.model.Part;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.Job;
-import org.quartz.JobDataMap;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
+@DisallowConcurrentExecution
+@PersistJobDataAfterExecution
 public class CategoryScrapingJob implements Job {
 
     @Autowired
@@ -28,13 +27,24 @@ public class CategoryScrapingJob implements Job {
 
         try {
             Part.PartType partType = Part.PartType.valueOf(partTypeStr);
-            log.info("Starting scheduled scraping job for category: {} ({})", partType, categoryPath);
+            log.info("Starting scheduled scraping job for category: {} ({}) - Thread: {}",
+                    partType, categoryPath, Thread.currentThread().getName());
+
+            dataMap.put("lastExecutionStart", System.currentTimeMillis());
 
             bazosService.scrapeCategory(partType, categoryPath);
 
-            log.info("Completed scheduled scraping job for category: {} successfully", partType);
+            dataMap.put("lastExecutionComplete", System.currentTimeMillis());
+
+            log.info("Completed scheduled scraping job for category: {} successfully on thread: {}",
+                    partType, Thread.currentThread().getName());
         } catch (Exception e) {
-            log.error("Error during scheduled scraping for category {}: {}", partTypeStr, e.getMessage(), e);
+            log.error("Error during scheduled scraping for category {} on thread {}: {}",
+                    partTypeStr, Thread.currentThread().getName(), e.getMessage(), e);
+
+            dataMap.put("lastExecutionError", e.getMessage());
+            dataMap.put("lastExecutionErrorTime", System.currentTimeMillis());
+
             throw new JobExecutionException(e);
         }
     }
