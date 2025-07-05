@@ -23,6 +23,8 @@ public class PartService {
 
     public Page<Part> findWithFilters(
             Part.PartType partType,
+            String itemType,
+            String modelName,
             BigDecimal minPrice,
             BigDecimal maxPrice,
             String marketplace,
@@ -43,6 +45,16 @@ public class PartService {
         // Part type filter
         if (partType != null) {
             predicates.add(cb.equal(root.get("partType"), partType));
+        }
+
+        // Item type filter (GPU, CPU, RAM, etc.)
+        if (itemType != null && !itemType.trim().isEmpty()) {
+            predicates.add(cb.equal(root.get("itemType"), itemType));
+        }
+
+        // Model name filter (RTX 5070, Ryzen 7 2700X, etc.)
+        if (modelName != null && !modelName.trim().isEmpty()) {
+            predicates.add(cb.equal(root.get("modelName"), modelName));
         }
 
         // Price filters
@@ -118,6 +130,14 @@ public class PartService {
 
         if (partType != null) {
             countPredicates.add(cb.equal(countRoot.get("partType"), partType));
+        }
+
+        if (itemType != null && !itemType.trim().isEmpty()) {
+            countPredicates.add(cb.equal(countRoot.get("itemType"), itemType));
+        }
+
+        if (modelName != null && !modelName.trim().isEmpty()) {
+            countPredicates.add(cb.equal(countRoot.get("modelName"), modelName));
         }
 
         if (minPrice != null) {

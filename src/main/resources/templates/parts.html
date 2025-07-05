@@ -51,7 +51,7 @@
                     <form id="filterForm" hx-get="/parts/fragment" hx-target="#parts-container"
                         hx-trigger="change, submit" hx-indicator="#loading" class="space-y-4">
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                             <!-- Part Type Filter -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -62,6 +62,34 @@
                                     <option value="">All Types</option>
                                     <option th:each="type : ${partTypes}" th:value="${type}"
                                         th:text="${type.displayName}" th:selected="${currentPartType == type}">Type
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Item Type Filter (GPU, CPU, RAM) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Component Type
+                                </label>
+                                <select name="itemType" id="itemTypeSelect"
+                                    class="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                    <option value="">All Components</option>
+                                    <option th:each="itemType : ${itemTypes}" th:value="${itemType}"
+                                        th:text="${itemType}" th:selected="${currentItemType == itemType}">Component
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Model Filter (RTX 5070, Ryzen 7 2700X, etc.) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Model
+                                </label>
+                                <select name="modelName" id="modelNameSelect"
+                                    class="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                    <option value="">All Models</option>
+                                    <option th:each="modelName : ${modelNames}" th:value="${modelName}"
+                                        th:text="${modelName}" th:selected="${currentModelName == modelName}">Model
                                     </option>
                                 </select>
                             </div>
@@ -212,9 +240,64 @@
         function clearFilters() {
             // Reset all form inputs
             document.getElementById('filterForm').reset();
+            // Clear model dropdown
+            updateModelDropdown('');
             // Trigger HTMX update
             htmx.trigger('#filterForm', 'submit');
         }
+
+        function updateModelDropdown(itemType) {
+            const modelSelect = document.getElementById('modelNameSelect');
+            const currentModel = modelSelect.value;
+
+            // Clear existing options except "All Models"
+            modelSelect.innerHTML = '<option value="">All Models</option>';
+
+            if (itemType) {
+                // Fetch models for the selected item type
+                fetch('/api/models?itemType=' + encodeURIComponent(itemType))
+                    .then(response => response.json())
+                    .then(models => {
+                        models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            if (model === currentModel) {
+                                option.selected = true;
+                            }
+                            modelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching models:', error);
+                    });
+            }
+        }
+
+        // Handle item type change
+        document.getElementById('itemTypeSelect').addEventListener('change', function () {
+            const selectedItemType = this.value;
+            updateModelDropdown(selectedItemType);
+
+            // If item type changed, clear model selection unless it's still valid
+            const modelSelect = document.getElementById('modelNameSelect');
+            if (selectedItemType === '') {
+                modelSelect.value = '';
+            }
+
+            // Trigger form update after a short delay to allow model dropdown to update
+            setTimeout(() => {
+                htmx.trigger('#filterForm', 'submit');
+            }, 100);
+        });
+
+        // Initialize model dropdown on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const itemTypeSelect = document.getElementById('itemTypeSelect');
+            if (itemTypeSelect.value) {
+                updateModelDropdown(itemTypeSelect.value);
+            }
+        });
     </script>
 </body>
 

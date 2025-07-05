@@ -61,6 +61,15 @@ public interface PartRepository extends JpaRepository<Part, Long> {
         @Query("SELECT DISTINCT p.marketplace FROM Part p WHERE p.active = true ORDER BY p.marketplace")
         List<String> findDistinctMarketplaces();
 
+        @Query("SELECT DISTINCT p.itemType FROM Part p WHERE p.active = true AND p.itemType IS NOT NULL ORDER BY p.itemType")
+        List<String> findDistinctItemTypes();
+
+        @Query("SELECT DISTINCT p.modelName FROM Part p WHERE p.active = true AND p.modelName IS NOT NULL ORDER BY p.modelName")
+        List<String> findDistinctModelNames();
+
+        @Query("SELECT DISTINCT p.modelName FROM Part p WHERE p.active = true AND p.itemType = :itemType AND p.modelName IS NOT NULL ORDER BY p.modelName")
+        List<String> findDistinctModelNamesByItemType(@Param("itemType") String itemType);
+
         @Query("SELECT COUNT(p) FROM Part p WHERE p.active = true AND p.scrapedAt >= :since")
         long countNewPartsScrapedSince(@Param("since") LocalDateTime since);
 
@@ -75,4 +84,17 @@ public interface PartRepository extends JpaRepository<Part, Long> {
 
         // Add count method for active parts
         long countByActiveTrue();
+
+        // Methods for component type extraction
+        List<Part> findByItemTypeIsNull();
+
+        List<Part> findByItemTypeIsNotNull();
+
+        List<Part> findByItemType(String itemType);
+
+        List<Part> findByModelName(String modelName);
+
+        Page<Part> findByActiveTrueAndItemType(String itemType, Pageable pageable);
+
+        Page<Part> findByActiveTrueAndModelName(String modelName, Pageable pageable);
 }

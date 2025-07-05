@@ -3,6 +3,7 @@ package com.tadeasfort.pcpartsscraper.service.scraping;
 import com.tadeasfort.pcpartsscraper.model.Part;
 import com.tadeasfort.pcpartsscraper.repository.PartRepository;
 import com.tadeasfort.pcpartsscraper.service.TorProxyService;
+import com.tadeasfort.pcpartsscraper.service.ComponentExtractionService;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -35,10 +36,13 @@ public class BazosScrapingService implements MarketplaceService {
 
     private final PartRepository partRepository;
     private final TorProxyService torProxyService;
+    private final ComponentExtractionService componentExtractionService;
 
-    public BazosScrapingService(PartRepository partRepository, TorProxyService torProxyService) {
+    public BazosScrapingService(PartRepository partRepository, TorProxyService torProxyService,
+            ComponentExtractionService componentExtractionService) {
         this.partRepository = partRepository;
         this.torProxyService = torProxyService;
+        this.componentExtractionService = componentExtractionService;
     }
 
     private static final String BASE_URL = "https://pc.bazos.cz";
@@ -245,14 +249,32 @@ public class BazosScrapingService implements MarketplaceService {
                     // Use saveAll for batch processing
                     List<Part> savedParts = partRepository.saveAll(newParts);
                     actuallyInserted = savedParts.size();
+
+                    // Extract component information for newly saved parts
+                    for (Part savedPart : savedParts) {
+                        try {
+                            componentExtractionService.extractAndUpdatePartInfo(savedPart);
+                        } catch (Exception ex) {
+                            log.debug("Failed to extract component info for part {}: {}", savedPart.getId(),
+                                    ex.getMessage());
+                        }
+                    }
                 } catch (Exception e) {
                     log.warn("Batch insert failed, falling back to individual inserts: {}", e.getMessage());
                     // Fallback to individual inserts if batch fails
                     for (Part part : newParts) {
                         try {
                             if (!partRepository.existsByUniqueHash(part.getUniqueHash())) {
-                                partRepository.save(part);
+                                Part savedPart = partRepository.save(part);
                                 actuallyInserted++;
+
+                                // Extract component information for newly saved part
+                                try {
+                                    componentExtractionService.extractAndUpdatePartInfo(savedPart);
+                                } catch (Exception componentEx) {
+                                    log.debug("Failed to extract component info for part {}: {}", savedPart.getId(),
+                                            componentEx.getMessage());
+                                }
                             }
                         } catch (Exception ex) {
                             log.debug("Failed to insert part (likely duplicate): {} - {}", part.getUniqueHash(),

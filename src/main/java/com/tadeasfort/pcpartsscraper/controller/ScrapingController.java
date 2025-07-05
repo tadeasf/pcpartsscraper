@@ -2,6 +2,7 @@ package com.tadeasfort.pcpartsscraper.controller;
 
 import com.tadeasfort.pcpartsscraper.model.Part;
 import com.tadeasfort.pcpartsscraper.service.scraping.BazosScrapingService;
+import com.tadeasfort.pcpartsscraper.service.scraping.PartTypeScrapingJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 public class ScrapingController {
 
     private final BazosScrapingService bazosService;
+    private final PartTypeScrapingJob partTypeScrapingJob;
 
     @GetMapping("/bazos")
     public String scrapeBazos() {
@@ -60,5 +62,25 @@ public class ScrapingController {
             case AUDIO_CARD -> "sound";
             default -> null;
         };
+    }
+
+    @GetMapping("/techpowerup/initial")
+    public String runInitialTechPowerUpScraping() {
+        try {
+            partTypeScrapingJob.runInitialTechPowerUpScraping();
+            return "Initial TechPowerUp scraping started successfully";
+        } catch (Exception e) {
+            return "TechPowerUp scraping failed: " + e.getMessage();
+        }
+    }
+
+    @GetMapping("/components/update")
+    public String updateComponentDatabase() {
+        try {
+            partTypeScrapingJob.updateComponentDatabase();
+            return "Component database update started successfully";
+        } catch (Exception e) {
+            return "Component database update failed: " + e.getMessage();
+        }
     }
 }

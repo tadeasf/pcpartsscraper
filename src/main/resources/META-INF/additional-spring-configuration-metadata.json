@@ -54,6 +54,31 @@
             "name": "app.tor.socks-port",
             "type": "java.lang.String",
             "description": "A description for 'app.tor.socks-port'"
+        },
+        {
+            "name": "app.scraping.techpowerup.base-delay-ms",
+            "type": "java.lang.Integer",
+            "description": "Base delay in milliseconds between TechPowerUp requests"
+        },
+        {
+            "name": "app.scraping.techpowerup.max-delay-ms",
+            "type": "java.lang.Integer",
+            "description": "Maximum delay in milliseconds for exponential backoff"
+        },
+        {
+            "name": "app.scraping.techpowerup.max-retries",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of retry attempts for failed requests"
+        },
+        {
+            "name": "app.scraping.techpowerup.timeout-ms",
+            "type": "java.lang.Integer",
+            "description": "Request timeout in milliseconds"
+        },
+        {
+            "name": "app.scraping.techpowerup.use-tor",
+            "type": "java.lang.Boolean",
+            "description": "Whether to use Tor proxy for TechPowerUp requests"
         }
     ]
 }

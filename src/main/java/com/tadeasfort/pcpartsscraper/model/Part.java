@@ -20,7 +20,10 @@ import java.time.LocalDateTime;
         @Index(name = "idx_price", columnList = "price"),
         @Index(name = "idx_scraped_at", columnList = "scrapedAt"),
         @Index(name = "idx_external_id", columnList = "externalId"),
-        @Index(name = "idx_unique_hash", columnList = "uniqueHash")
+        @Index(name = "idx_unique_hash", columnList = "uniqueHash"),
+        @Index(name = "idx_item_type", columnList = "itemType"),
+        @Index(name = "idx_model_name", columnList = "modelName"),
+        @Index(name = "idx_parts_category", columnList = "category")
 })
 @Data
 @NoArgsConstructor
@@ -83,6 +86,19 @@ public class Part {
 
     @Column(length = 200)
     private String model;
+
+    // New fields for component type detection
+    @Column(length = 100)
+    private String itemType; // GPU, CPU, RAM, etc.
+
+    @Column(length = 200)
+    private String modelName; // "RTX 5070", "Ryzen 5 5600X", etc.
+
+    @Column(length = 50)
+    private String category; // More specific: "graphics_card", "processor", "memory"
+
+    @Column(precision = 3, scale = 2)
+    private BigDecimal extractionConfidence; // 0.0-1.0 confidence score for extraction
 
     @Column(length = 200)
     private String sellerName;

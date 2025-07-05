@@ -1,7 +1,9 @@
 package com.tadeasfort.pcpartsscraper.controller;
 
 import com.tadeasfort.pcpartsscraper.model.Part;
+import com.tadeasfort.pcpartsscraper.model.PartType;
 import com.tadeasfort.pcpartsscraper.repository.PartRepository;
+import com.tadeasfort.pcpartsscraper.repository.PartTypeRepository;
 import com.tadeasfort.pcpartsscraper.service.PartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,16 +15,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
 public class MainController {
 
     private final PartRepository partRepository;
+    private final PartTypeRepository partTypeRepository;
     private final PartService partService;
 
     @GetMapping("/")
@@ -64,6 +71,8 @@ public class MainController {
             @RequestParam(defaultValue = "scrapedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) Part.PartType partType,
+            @RequestParam(required = false) String itemType,
+            @RequestParam(required = false) String modelName,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String marketplace,
@@ -72,38 +81,38 @@ public class MainController {
             @RequestParam(required = false) String search,
             Model model) {
 
-        // Convert empty strings to null for proper filtering
-        String searchParam = (search != null && search.trim().isEmpty()) ? null : search;
-        String marketplaceParam = (marketplace != null && marketplace.trim().isEmpty()) ? null : marketplace;
-        String sourceParam = (source != null && source.trim().isEmpty()) ? null : source;
-
-        // Calculate maxAge from maxAgeDays
-        LocalDateTime maxAge = null;
-        if (maxAgeDays != null && maxAgeDays > 0) {
-            maxAge = LocalDateTime.now().minusDays(maxAgeDays);
-        }
+        LocalDateTime maxAge = maxAgeDays != null ? LocalDateTime.now().minusDays(maxAgeDays) : null;
 
         // Create pageable with sorting
-        Sort sort = Sort.by(sortDir.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+        Sort sort = Sort.by(sortDir.equals("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Get filtered parts using the service
+        // Get filtered parts
         Page<Part> partsPage = partService.findWithFilters(
-                partType, minPrice, maxPrice, marketplaceParam, sourceParam, maxAge, searchParam, pageable);
+                partType, itemType, modelName, minPrice, maxPrice, marketplace, source, maxAge, search, pageable);
 
         // Get filter options
-        List<String> sources = partRepository.findDistinctSources();
+        List<Part.PartType> partTypes = Arrays.asList(Part.PartType.values());
+        List<String> itemTypes = partRepository.findDistinctItemTypes();
+        List<String> modelNames = itemType != null ? partRepository.findDistinctModelNamesByItemType(itemType)
+                : partRepository.findDistinctModelNames();
         List<String> marketplaces = partRepository.findDistinctMarketplaces();
+        List<String> sources = partRepository.findDistinctSources();
 
+        // Add attributes to model
         model.addAttribute("currentPage", "parts");
         model.addAttribute("title", "Browse Parts");
         model.addAttribute("partsPage", partsPage);
-        model.addAttribute("sources", sources);
+        model.addAttribute("partTypes", partTypes);
+        model.addAttribute("itemTypes", itemTypes);
+        model.addAttribute("modelNames", modelNames);
         model.addAttribute("marketplaces", marketplaces);
-        model.addAttribute("partTypes", Part.PartType.values());
+        model.addAttribute("sources", sources);
 
-        // Add current filter values to model
+        // Current filter values
         model.addAttribute("currentPartType", partType);
+        model.addAttribute("currentItemType", itemType);
+        model.addAttribute("currentModelName", modelName);
         model.addAttribute("currentMinPrice", minPrice);
         model.addAttribute("currentMaxPrice", maxPrice);
         model.addAttribute("currentMarketplace", marketplace);
@@ -124,6 +133,8 @@ public class MainController {
             @RequestParam(defaultValue = "scrapedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) Part.PartType partType,
+            @RequestParam(required = false) String itemType,
+            @RequestParam(required = false) String modelName,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String marketplace,
@@ -132,26 +143,40 @@ public class MainController {
             @RequestParam(required = false) String search,
             Model model) {
 
-        // Convert empty strings to null for proper filtering
-        String searchParam = (search != null && search.trim().isEmpty()) ? null : search;
-        String marketplaceParam = (marketplace != null && marketplace.trim().isEmpty()) ? null : marketplace;
-        String sourceParam = (source != null && source.trim().isEmpty()) ? null : source;
-
-        // Calculate maxAge from maxAgeDays
-        LocalDateTime maxAge = null;
-        if (maxAgeDays != null && maxAgeDays > 0) {
-            maxAge = LocalDateTime.now().minusDays(maxAgeDays);
-        }
+        LocalDateTime maxAge = maxAgeDays != null ? LocalDateTime.now().minusDays(maxAgeDays) : null;
 
         // Create pageable with sorting
-        Sort sort = Sort.by(sortDir.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+        Sort sort = Sort.by(sortDir.equals("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Get filtered parts using the service
+        // Get filtered parts
         Page<Part> partsPage = partService.findWithFilters(
-                partType, minPrice, maxPrice, marketplaceParam, sourceParam, maxAge, searchParam, pageable);
+                partType, itemType, modelName, minPrice, maxPrice, marketplace, source, maxAge, search, pageable);
+
+        // Get price statistics for models in the current page
+        Map<String, PartType> priceStatistics = partsPage.getContent().stream()
+                .filter(part -> part.getModelName() != null && part.getItemType() != null)
+                .collect(Collectors.toMap(
+                        part -> part.getModelName() + "_" + part.getItemType(),
+                        part -> partTypeRepository.findByModelNameAndItemType(part.getModelName(), part.getItemType())
+                                .orElse(null),
+                        (existing, replacement) -> existing != null ? existing : replacement))
+                .entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         model.addAttribute("partsPage", partsPage);
+        model.addAttribute("priceStatistics", priceStatistics);
         return "fragments/parts-list";
+    }
+
+    @GetMapping("/api/models")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public List<String> getModelsByItemType(@RequestParam(required = false) String itemType) {
+        if (itemType != null && !itemType.trim().isEmpty()) {
+            return partRepository.findDistinctModelNamesByItemType(itemType);
+        }
+        return partRepository.findDistinctModelNames();
     }
 }

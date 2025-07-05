@@ -1,2 +1,3 @@
 - add items into types via regex?
 - show average price for an item type? maybe even include some kind of api which would show new price for given item? and a chart of price in time?
+- add motherboard model detection support - handle later due to complexity with chipset + manufacturer combinations
