@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org" th:fragment="layout (title, currentPage)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title != null ? title + ' - PC Parts Scraper' : 'PC Parts Scraper'}">PC Parts Scraper</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+
+    <!-- Configure Tailwind for dark mode -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+
+    <!-- Theme initialization -->
+    <script th:replace="~{fragments/theme-toggle :: theme-init-script}"></script>
+
+    <style>
+        /* Remove all border-radius */
+        * {
+            border-radius: 0 !important;
+        }
+    </style>
+
+    <!-- Additional head content -->
+    <th:block layout:fragment="head">
+        <!-- Page-specific head content goes here -->
+    </th:block>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="min-h-screen flex flex-col max-w-7xl mx-auto">
+        <!-- Header -->
+        <div th:replace="~{fragments/header :: header(${currentPage ?: 'dashboard'})}"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+            <th:block layout:fragment="content">
+                <!-- Page content will be inserted here -->
+            </th:block>
+        </main>
+
+        <!-- Footer -->
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+
+    <!-- Theme Toggle -->
+    <div th:replace="~{fragments/theme-toggle :: theme-toggle}"></div>
+
+    <!-- Theme Toggle Script -->
+    <script th:replace="~{fragments/theme-toggle :: theme-toggle-script}"></script>
+
+    <!-- Additional scripts -->
+    <th:block layout:fragment="scripts">
+        <!-- Page-specific scripts go here -->
+    </th:block>
+</body>
+
+</html>
