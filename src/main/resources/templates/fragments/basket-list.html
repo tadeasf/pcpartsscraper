@@ -88,11 +88,11 @@
                     </a>
                     <button th:if="${!#lists.isEmpty(basket.items)}" th:onclick="'shareBasket(' + ${basket.id} + ')'"
                         class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
-                        Share
+                        Open All Links
                     </button>
                     <button th:if="${#lists.isEmpty(basket.items)}" disabled
                         class="flex-1 bg-gray-400 text-white text-center py-2 px-3 text-sm font-medium cursor-not-allowed">
-                        Share
+                        Open All Links
                     </button>
                 </div>
             </div>
@@ -118,29 +118,54 @@
 
 <script>
     function shareBasket(basketId) {
-        // For now, just copy the basket URL to clipboard
-        const url = window.location.origin + '/baskets/' + basketId;
+        // Fetch the basket URLs from the backend
+        fetch('/baskets/' + basketId + '/share')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to get basket URLs');
+                }
+                return response.json();
+            })
+            .then(urls => {
+                if (urls.length === 0) {
+                    showMessage('No parts found in this basket', 'error');
+                    return;
+                }
 
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(() => {
-                showMessage('Basket URL copied to clipboard!', 'success');
-            }).catch(() => {
-                showMessage('Could not copy URL to clipboard', 'error');
+                // Ask user for confirmation since we're about to open many tabs
+                const confirmMessage = `This will open ${urls.length} tabs with the marketplace listings. Continue?`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+
+                // Open all URLs in new tabs
+                urls.forEach((url, index) => {
+                    // Add a small delay between opening tabs to prevent browser blocking
+                    setTimeout(() => {
+                        window.open(url, '_blank');
+                    }, index * 100);
+                });
+
+                showMessage(`Opened ${urls.length} marketplace listings!`, 'success');
+            })
+            .catch(error => {
+                console.error('Error sharing basket:', error);
+                showMessage('Error sharing basket: ' + error.message, 'error');
             });
-        } else {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = url;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showMessage('Basket URL copied to clipboard!', 'success');
-            } catch (err) {
-                showMessage('Could not copy URL to clipboard', 'error');
+    }
+
+    function showMessage(message, type) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 p-4 shadow-lg z-50 ' +
+            (type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
             }
-            document.body.removeChild(textArea);
-        }
+        }, 3000);
     }
 </script>
 

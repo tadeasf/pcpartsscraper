@@ -22,7 +22,8 @@
                     <span th:if="${part.price != null}" class="text-2xl font-bold text-green-600 dark:text-green-400"
                         th:text="${part.price + ' ' + part.currency}">0 CZK</span>
                     <span th:if="${part.price == null}"
-                        class="text-lg font-medium text-gray-500 dark:text-gray-400">Price on request</span>
+                        class="text-lg font-medium text-gray-500 dark:text-gray-400">Price on
+                        request</span>
                 </div>
             </div>
 
@@ -30,13 +31,13 @@
             <div class="p-4 space-y-3">
                 <!-- Source and Marketplace -->
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-600 dark:text-gray-400">
+                    <span class="text-gray-500 dark:text-gray-400">
                         <span class="font-medium" th:text="${part.source}">bazos</span>
-                        <span class="text-gray-400 dark:text-gray-500">•</span>
+                        <span class="text-gray-400">•</span>
                         <span th:text="${part.marketplace}">bazos</span>
                     </span>
                     <span class="text-gray-500 dark:text-gray-400"
-                        th:text="${#temporals.format(part.scrapedAt, 'dd.MM.yyyy')}">01.01.2024</span>
+                        th:text="${#temporals.format(part.scrapedAt, 'dd.MM.yyyy HH:mm')}">01.01.2024 10:00</span>
                 </div>
 
                 <!-- Location -->
@@ -46,7 +47,7 @@
                             d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
                             clip-rule="evenodd" />
                     </svg>
-                    <span th:text="${part.location}">Location</span>
+                    <span th:text="${part.location}" class="text-gray-900 dark:text-gray-100">Location</span>
                 </div>
 
                 <!-- Seller -->
@@ -55,16 +56,15 @@
                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
                             clip-rule="evenodd" />
                     </svg>
-                    <span th:text="${part.sellerName}">Seller</span>
+                    <span th:text="${part.sellerName}" class="text-gray-900 dark:text-gray-100">Seller</span>
                 </div>
 
                 <!-- Description Preview -->
-                <div th:if="${part.description}" class="text-sm text-gray-600 dark:text-gray-400">
-                    <p class="line-clamp-3" th:text="${#strings.abbreviate(part.description, 150)}">Description...</p>
-                </div>
+                <div th:if="${part.description}" class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3"
+                    th:text="${part.description}">Description...</div>
 
                 <!-- View Count and Promoted -->
-                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                <div class="flex justify-between items-center text-xs text-gray-500">
                     <span th:if="${part.viewCount}" class="flex items-center">
                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -72,10 +72,11 @@
                                 d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
                                 clip-rule="evenodd" />
                         </svg>
-                        <span th:text="${part.viewCount + ' views'}">0 views</span>
+                        <span th:text="${part.viewCount + ' views'}" class="text-gray-900 dark:text-gray-100">0
+                            views</span>
                     </span>
                     <span th:if="${part.isPromoted}"
-                        class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 text-xs font-medium">
+                        class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium">
                         PROMOTED
                     </span>
                 </div>
@@ -86,15 +87,14 @@
                 <div class="flex space-x-2">
                     <!-- View Details -->
                     <a th:href="${part.url}" target="_blank"
-                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
                         View Details
                     </a>
 
                     <!-- Add to Basket -->
                     <button th:if="${part.price != null}"
                         th:hx-get="@{/baskets/modal/add-part/{partId}(partId=${part.id})}" hx-target="#modal-container"
-                        hx-swap="innerHTML"
-                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
                         Add to Basket
                     </button>
 
@@ -119,20 +119,18 @@
 
     <!-- Pagination -->
     <div th:if="${partsPage.totalElements > 0}"
-        class="mt-8 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-6">
+        class="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
 
         <!-- Results Info -->
         <div class="flex-1 flex justify-between sm:hidden">
-            <button th:if="${!partsPage.first}" hx-get="/parts/fragment"
-                hx-vals='{"page": "[[${partsPage.number - 1}]]"}' hx-include="#filterForm" hx-target="#parts-container"
-                hx-indicator="#loading"
-                class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <button th:if="${!partsPage.first}" hx-get="/parts/fragment" hx-include="#filterForm"
+                th:hx-vals="|{'page': '${partsPage.number - 1}'}|" hx-target="#parts-container" hx-indicator="#loading"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Previous
             </button>
-            <button th:if="${!partsPage.last}" hx-get="/parts/fragment"
-                hx-vals='{"page": "[[${partsPage.number + 1}]]"}' hx-include="#filterForm" hx-target="#parts-container"
-                hx-indicator="#loading"
-                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <button th:if="${!partsPage.last}" hx-get="/parts/fragment" hx-include="#filterForm"
+                th:hx-vals="|{'page': '${partsPage.number + 1}'}|" hx-target="#parts-container" hx-indicator="#loading"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Next
             </button>
         </div>
@@ -140,7 +138,7 @@
         <!-- Desktop Pagination -->
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-                <p class="text-sm text-gray-700 dark:text-gray-300">
+                <p class="text-sm text-gray-700">
                     Showing
                     <span class="font-medium" th:text="${partsPage.number * partsPage.size + 1}">1</span>
                     to
@@ -155,10 +153,10 @@
             <div>
                 <nav class="relative z-0 inline-flex shadow-sm -space-x-px" aria-label="Pagination">
                     <!-- Previous Button -->
-                    <button th:if="${!partsPage.first}" hx-get="/parts/fragment"
-                        hx-vals='{"page": "[[${partsPage.number - 1}]]"}' hx-include="#filterForm"
-                        hx-target="#parts-container" hx-indicator="#loading"
-                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <button th:if="${!partsPage.first}" hx-get="/parts/fragment" hx-include="#filterForm"
+                        th:hx-vals="|{'page': '${partsPage.number - 1}'}|" hx-target="#parts-container"
+                        hx-indicator="#loading"
+                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         Previous
                     </button>
 
@@ -166,22 +164,21 @@
                     <span
                         th:each="pageNum : ${#numbers.sequence(T(java.lang.Math).max(0L, partsPage.number - 2L), T(java.lang.Math).min(partsPage.totalPages - 1L, partsPage.number + 2L))}">
                         <button th:if="${pageNum == partsPage.number}"
-                            class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 dark:bg-blue-900 text-sm font-medium text-blue-600 dark:text-blue-200">
+                            class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
                             <span th:text="${pageNum + 1}">1</span>
                         </button>
-                        <button th:if="${pageNum != partsPage.number}" hx-get="/parts/fragment"
-                            th:hx-vals="'{\u0022page\u0022: \u0022' + ${pageNum} + '\u0022}'" hx-include="#filterForm"
-                            hx-target="#parts-container" hx-indicator="#loading"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <button th:if="${pageNum != partsPage.number}" hx-get="/parts/fragment" hx-include="#filterForm"
+                            th:hx-vals="|{'page': '${pageNum}'}|" hx-target="#parts-container" hx-indicator="#loading"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                             <span th:text="${pageNum + 1}">1</span>
                         </button>
                     </span>
 
                     <!-- Next Button -->
-                    <button th:if="${!partsPage.last}" hx-get="/parts/fragment"
-                        hx-vals='{"page": "[[${partsPage.number + 1}]]"}' hx-include="#filterForm"
-                        hx-target="#parts-container" hx-indicator="#loading"
-                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <button th:if="${!partsPage.last}" hx-get="/parts/fragment" hx-include="#filterForm"
+                        th:hx-vals="|{'page': '${partsPage.number + 1}'}|" hx-target="#parts-container"
+                        hx-indicator="#loading"
+                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         Next
                     </button>
                 </nav>

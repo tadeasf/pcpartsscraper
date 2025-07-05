@@ -62,7 +62,7 @@ public class BasketController {
                     .build();
 
             basket = basketRepository.save(basket);
-            return ResponseEntity.ok(basket.getId().toString());
+            return ResponseEntity.ok("basketId=" + basket.getId());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error creating basket: " + e.getMessage());
         }
@@ -190,5 +190,27 @@ public class BasketController {
 
         model.addAttribute("basket", basketOpt.get());
         return "fragments/basket-items";
+    }
+
+    @GetMapping("/{id}/share")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<String>> shareBasket(@PathVariable Long id) {
+        try {
+            Optional<PCBasket> basketOpt = basketRepository.findByIdAndActiveTrue(id);
+            if (basketOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            PCBasket basket = basketOpt.get();
+            List<String> urls = basket.getItems().stream()
+                    .map(item -> item.getPart().getUrl())
+                    .distinct()
+                    .toList();
+
+            return ResponseEntity.ok(urls);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
