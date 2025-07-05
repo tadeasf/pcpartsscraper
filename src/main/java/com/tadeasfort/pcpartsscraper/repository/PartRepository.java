@@ -31,21 +31,35 @@ public interface PartRepository extends JpaRepository<Part, Long> {
 
         Page<Part> findByActiveTrueAndPartType(Part.PartType partType, Pageable pageable);
 
-        @Query("SELECT p FROM Part p WHERE p.active = true AND " +
-                        "(:partType IS NULL OR p.partType = :partType) AND " +
-                        "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
-                        "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
-                        "(:marketplace IS NULL OR p.marketplace = :marketplace) AND " +
-                        "(:searchTerm IS NULL OR :searchTerm = '' OR " +
-                        " LOWER(COALESCE(p.title, '')) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-                        " LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-        Page<Part> findWithFilters(
-                        @Param("partType") Part.PartType partType,
-                        @Param("minPrice") BigDecimal minPrice,
-                        @Param("maxPrice") BigDecimal maxPrice,
-                        @Param("marketplace") String marketplace,
-                        @Param("searchTerm") String searchTerm,
+        // Simple methods that we can combine programmatically
+        Page<Part> findByActiveTrueAndPartTypeAndPriceGreaterThanEqual(Part.PartType partType, BigDecimal minPrice,
                         Pageable pageable);
+
+        Page<Part> findByActiveTrueAndPartTypeAndPriceLessThanEqual(Part.PartType partType, BigDecimal maxPrice,
+                        Pageable pageable);
+
+        Page<Part> findByActiveTrueAndPartTypeAndPriceBetween(Part.PartType partType, BigDecimal minPrice,
+                        BigDecimal maxPrice, Pageable pageable);
+
+        Page<Part> findByActiveTrueAndMarketplace(String marketplace, Pageable pageable);
+
+        Page<Part> findByActiveTrueAndSource(String source, Pageable pageable);
+
+        Page<Part> findByActiveTrueAndScrapedAtGreaterThanEqual(LocalDateTime scrapedAt, Pageable pageable);
+
+        // Search methods
+        @Query("SELECT p FROM Part p WHERE p.active = true AND " +
+                        "(LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "LOWER(COALESCE(p.brand, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "LOWER(COALESCE(p.model, '')) LIKE LOWER(CONCAT('%', :search, '%')))")
+        Page<Part> findByActiveTrueAndSearchTerm(@Param("search") String search, Pageable pageable);
+
+        @Query("SELECT DISTINCT p.source FROM Part p WHERE p.active = true ORDER BY p.source")
+        List<String> findDistinctSources();
+
+        @Query("SELECT DISTINCT p.marketplace FROM Part p WHERE p.active = true ORDER BY p.marketplace")
+        List<String> findDistinctMarketplaces();
 
         @Query("SELECT COUNT(p) FROM Part p WHERE p.active = true AND p.scrapedAt >= :since")
         long countNewPartsScrapedSince(@Param("since") LocalDateTime since);
@@ -58,4 +72,7 @@ public interface PartRepository extends JpaRepository<Part, Long> {
 
         @Query("SELECT p FROM Part p WHERE p.active = true ORDER BY p.scrapedAt DESC")
         List<Part> findLatestParts(Pageable pageable);
+
+        // Add count method for active parts
+        long countByActiveTrue();
 }

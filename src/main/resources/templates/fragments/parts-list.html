@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="parts-list">
+    <!-- Parts Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div th:each="part : ${partsPage.content}"
+            class="bg-white dark:bg-gray-800 shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+            <!-- Part Header -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-start">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 line-clamp-2"
+                        th:text="${part.title}">Part Title</h3>
+                    <span
+                        class="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                        th:text="${part.partType.displayName}">Category</span>
+                </div>
+
+                <!-- Price -->
+                <div class="mt-2">
+                    <span th:if="${part.price != null}" class="text-2xl font-bold text-green-600 dark:text-green-400"
+                        th:text="${part.price + ' ' + part.currency}">0 CZK</span>
+                    <span th:if="${part.price == null}"
+                        class="text-lg font-medium text-gray-500 dark:text-gray-400">Price on request</span>
+                </div>
+            </div>
+
+            <!-- Part Details -->
+            <div class="p-4 space-y-3">
+                <!-- Source and Marketplace -->
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">
+                        <span class="font-medium" th:text="${part.source}">bazos</span>
+                        <span class="text-gray-400 dark:text-gray-500">•</span>
+                        <span th:text="${part.marketplace}">bazos</span>
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400"
+                        th:text="${#temporals.format(part.scrapedAt, 'dd.MM.yyyy')}">01.01.2024</span>
+                </div>
+
+                <!-- Location -->
+                <div th:if="${part.location}" class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span th:text="${part.location}">Location</span>
+                </div>
+
+                <!-- Seller -->
+                <div th:if="${part.sellerName}" class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span th:text="${part.sellerName}">Seller</span>
+                </div>
+
+                <!-- Description Preview -->
+                <div th:if="${part.description}" class="text-sm text-gray-600 dark:text-gray-400">
+                    <p class="line-clamp-3" th:text="${#strings.abbreviate(part.description, 150)}">Description...</p>
+                </div>
+
+                <!-- View Count and Promoted -->
+                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                    <span th:if="${part.viewCount}" class="flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fill-rule="evenodd"
+                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span th:text="${part.viewCount + ' views'}">0 views</span>
+                    </span>
+                    <span th:if="${part.isPromoted}"
+                        class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 text-xs font-medium">
+                        PROMOTED
+                    </span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                <div class="flex space-x-2">
+                    <!-- View Details -->
+                    <a th:href="${part.url}" target="_blank"
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
+                        View Details
+                    </a>
+
+                    <!-- Add to Basket -->
+                    <button th:if="${part.price != null}" hx-get="/baskets/modal/add-part/{partId}(partId=${part.id})"
+                        hx-target="#modal-container" hx-swap="innerHTML"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
+                        Add to Basket
+                    </button>
+
+                    <button th:if="${part.price == null}" disabled
+                        class="flex-1 bg-gray-400 text-white text-center py-2 px-3 text-sm font-medium cursor-not-allowed">
+                        Price on Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${partsPage.totalElements == 0}" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No parts found</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters or search terms.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${partsPage.totalElements > 0}"
+        class="mt-8 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-6">
+
+        <!-- Results Info -->
+        <div class="flex-1 flex justify-between sm:hidden">
+            <button th:if="${!partsPage.first}" hx-get="/parts/fragment"
+                hx-vals='{"page": "[[${partsPage.number - 1}]]"}' hx-include="#filterForm" hx-target="#parts-container"
+                hx-indicator="#loading"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                Previous
+            </button>
+            <button th:if="${!partsPage.last}" hx-get="/parts/fragment"
+                hx-vals='{"page": "[[${partsPage.number + 1}]]"}' hx-include="#filterForm" hx-target="#parts-container"
+                hx-indicator="#loading"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                Next
+            </button>
+        </div>
+
+        <!-- Desktop Pagination -->
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                    Showing
+                    <span class="font-medium" th:text="${partsPage.number * partsPage.size + 1}">1</span>
+                    to
+                    <span class="font-medium"
+                        th:text="${#numbers.formatInteger(T(java.lang.Math).min((partsPage.number + 1L) * partsPage.size, partsPage.totalElements), 0)}">20</span>
+                    of
+                    <span class="font-medium" th:text="${partsPage.totalElements}">97</span>
+                    results
+                </p>
+            </div>
+
+            <div>
+                <nav class="relative z-0 inline-flex shadow-sm -space-x-px" aria-label="Pagination">
+                    <!-- Previous Button -->
+                    <button th:if="${!partsPage.first}" hx-get="/parts/fragment"
+                        hx-vals='{"page": "[[${partsPage.number - 1}]]"}' hx-include="#filterForm"
+                        hx-target="#parts-container" hx-indicator="#loading"
+                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        Previous
+                    </button>
+
+                    <!-- Page Numbers -->
+                    <span
+                        th:each="pageNum : ${#numbers.sequence(T(java.lang.Math).max(0L, partsPage.number - 2L), T(java.lang.Math).min(partsPage.totalPages - 1L, partsPage.number + 2L))}">
+                        <button th:if="${pageNum == partsPage.number}"
+                            class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 dark:bg-blue-900 text-sm font-medium text-blue-600 dark:text-blue-200">
+                            <span th:text="${pageNum + 1}">1</span>
+                        </button>
+                        <button th:if="${pageNum != partsPage.number}" hx-get="/parts/fragment"
+                            th:hx-vals="'{\u0022page\u0022: \u0022' + ${pageNum} + '\u0022}'" hx-include="#filterForm"
+                            hx-target="#parts-container" hx-indicator="#loading"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <span th:text="${pageNum + 1}">1</span>
+                        </button>
+                    </span>
+
+                    <!-- Next Button -->
+                    <button th:if="${!partsPage.last}" hx-get="/parts/fragment"
+                        hx-vals='{"page": "[[${partsPage.number + 1}]]"}' hx-include="#filterForm"
+                        hx-target="#parts-container" hx-indicator="#loading"
+                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        Next
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

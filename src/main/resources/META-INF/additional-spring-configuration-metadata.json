@@ -29,6 +29,31 @@
             "name": "app.scraping.bazos.min-new-parts-threshold",
             "type": "java.lang.Integer",
             "description": "Stop scraping when fewer than this many new parts found on a page"
+        },
+        {
+            "name": "app.tor.enabled",
+            "type": "java.lang.String",
+            "description": "A description for 'app.tor.enabled'"
+        },
+        {
+            "name": "app.tor.host",
+            "type": "java.lang.String",
+            "description": "A description for 'app.tor.host'"
+        },
+        {
+            "name": "app.tor.control-port",
+            "type": "java.lang.String",
+            "description": "A description for 'app.tor.control-port'"
+        },
+        {
+            "name": "app.tor.rotation-interval",
+            "type": "java.lang.String",
+            "description": "A description for 'app.tor.rotation-interval'"
+        },
+        {
+            "name": "app.tor.socks-port",
+            "type": "java.lang.String",
+            "description": "A description for 'app.tor.socks-port'"
         }
     ]
 }

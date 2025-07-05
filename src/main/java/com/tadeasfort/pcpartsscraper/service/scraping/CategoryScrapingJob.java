@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class CategoryScrapingJob implements Job {
 
     @Autowired
-    private Bazos bazosService;
+    private BazosScrapingService bazosService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {

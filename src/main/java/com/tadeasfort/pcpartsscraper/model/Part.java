@@ -59,6 +59,10 @@ public class Part {
 
     @NotBlank
     @Column(nullable = false, length = 50)
+    private String source; // Specific source within marketplace (e.g., "bazos", "sbazar")
+
+    @NotBlank
+    @Column(nullable = false, length = 50)
     private String externalId;
 
     @NotBlank

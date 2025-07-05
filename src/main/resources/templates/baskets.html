@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Baskets - PC Parts Scraper</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        /* Remove all border-radius */
+        * {
+            border-radius: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="min-h-screen flex flex-col max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <a href="/" class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                            PC Parts Scraper
+                        </a>
+                    </div>
+
+                    <nav class="flex space-x-4">
+                        <a href="/"
+                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
+                            Dashboard
+                        </a>
+                        <a href="/parts"
+                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
+                            Browse Parts
+                        </a>
+                        <a href="/baskets"
+                            class="text-blue-600 dark:text-blue-400 px-3 py-2 text-sm font-medium border-b-2 border-blue-600 dark:border-blue-400">
+                            My Baskets
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+            <div class="space-y-6">
+                <!-- Header -->
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">My PC Build Baskets</h1>
+                    <button onclick="showCreateBasketModal()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium transition-colors">
+                        Create New Basket
+                    </button>
+                </div>
+
+                <!-- Baskets Grid -->
+                <div id="baskets-container">
+                    <div th:replace="~{fragments/basket-list :: basket-list}"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 sm:px-6 lg:px-8 py-4">
+                <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+                    <p>&copy; 2024 PC Parts Scraper. Built with Spring Boot + HTMX + Tailwind CSS.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+
+    <!-- Dark mode toggle -->
+    <div class="fixed bottom-4 right-4"
+        x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches) }"
+        x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); if (val) { document.documentElement.classList.add('dark') } else { document.documentElement.classList.remove('dark') } })"
+        x-cloak>
+        <button @click="darkMode = !darkMode"
+            class="bg-gray-200 dark:bg-gray-700 p-3 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+            <svg x-show="!darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                    clip-rule="evenodd" />
+            </svg>
+            <svg x-show="darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        function showCreateBasketModal() {
+            const modal = `
+                <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
+                     onclick="closeModal()">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 lg:w-1/3 shadow-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                         onclick="event.stopPropagation()">
+                        
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Create New Basket</h3>
+                            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form onsubmit="createBasket(event)" class="py-4 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Basket Name *
+                                </label>
+                                <input type="text" id="basket-name" required
+                                       placeholder="Enter basket name..."
+                                       class="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Description (optional)
+                                </label>
+                                <textarea id="basket-description" rows="3"
+                                          placeholder="Enter basket description..."
+                                          class="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <button type="button" onclick="closeModal()"
+                                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    Cancel
+                                </button>
+                                <button type="submit"
+                                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent">
+                                    Create Basket
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = modal;
+        }
+
+        function closeModal() {
+            document.getElementById('modal-container').innerHTML = '';
+        }
+
+        function createBasket(event) {
+            event.preventDefault();
+            const name = document.getElementById('basket-name').value.trim();
+            const description = document.getElementById('basket-description').value.trim();
+
+            if (!name) {
+                alert('Please enter a basket name.');
+                return;
+            }
+
+            fetch('/baskets/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'name=' + encodeURIComponent(name) + '&description=' + encodeURIComponent(description)
+            })
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes('successfully')) {
+                        showMessage('Basket created successfully!', 'success');
+                        closeModal();
+                        // Refresh baskets list
+                        htmx.ajax('GET', '/baskets/fragment/list', { target: '#baskets-container' });
+                    } else {
+                        showMessage('Error creating basket: ' + data, 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error creating basket: ' + error, 'error');
+                });
+        }
+
+        function deleteBasket(basketId) {
+            if (!confirm('Are you sure you want to delete this basket?')) {
+                return;
+            }
+
+            fetch('/baskets/' + basketId, {
+                method: 'DELETE'
+            })
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes('successfully')) {
+                        showMessage('Basket deleted successfully!', 'success');
+                        // Refresh baskets list
+                        htmx.ajax('GET', '/baskets/fragment/list', { target: '#baskets-container' });
+                    } else {
+                        showMessage('Error deleting basket: ' + data, 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error deleting basket: ' + error, 'error');
+                });
+        }
+
+        function showMessage(message, type) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 p-4 shadow-lg z-50 ' +
+                (type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }
+
+        // Initialize dark mode
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+
+</html>

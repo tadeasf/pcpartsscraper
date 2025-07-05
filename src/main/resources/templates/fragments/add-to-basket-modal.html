@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="add-to-basket-modal">
+    <!-- Modal Overlay -->
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" id="modal-overlay"
+        onclick="closeModal()">
+
+        <!-- Modal Content -->
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+            onclick="event.stopPropagation()">
+
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Add to Basket</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Part Info -->
+            <div class="py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900 dark:text-gray-100" th:text="${part.title}">Part Title</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" th:text="${part.partType.displayName}">
+                            Category</p>
+                        <p class="text-lg font-semibold text-green-600 dark:text-green-400"
+                            th:text="${part.price + ' ' + part.currency}">0 CZK</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basket Selection -->
+            <div class="py-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Select Basket(s)
+                    </label>
+
+                    <!-- Existing Baskets -->
+                    <div th:if="${!#lists.isEmpty(baskets)}" class="space-y-2 max-h-40 overflow-y-auto">
+                        <div th:each="basket : ${baskets}" class="flex items-center">
+                            <input type="checkbox" th:id="'basket-' + ${basket.id}" th:value="${basket.id}"
+                                name="selectedBaskets"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700">
+                            <label th:for="'basket-' + ${basket.id}"
+                                class="ml-2 block text-sm text-gray-900 dark:text-gray-100">
+                                <span th:text="${basket.name}">Basket Name</span>
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    (<span th:text="${basket.items.size()}">0</span> items,
+                                    <span th:text="${basket.getTotalPrice()} + ' CZK'">0 CZK</span>)
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- No Baskets Message -->
+                    <div th:if="${#lists.isEmpty(baskets)}" class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        <p>No baskets found. Create a new one below.</p>
+                    </div>
+                </div>
+
+                <!-- Create New Basket -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="create-new-basket"
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                            onchange="toggleNewBasketForm()">
+                        <label for="create-new-basket"
+                            class="ml-2 block text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Create New Basket
+                        </label>
+                    </div>
+
+                    <div id="new-basket-form" class="hidden space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Basket Name *
+                            </label>
+                            <input type="text" id="new-basket-name" placeholder="Enter basket name..."
+                                class="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Description (optional)
+                            </label>
+                            <textarea id="new-basket-description" placeholder="Enter basket description..." rows="2"
+                                class="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quantity -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Quantity
+                    </label>
+                    <input type="number" id="part-quantity" value="1" min="1"
+                        class="w-20 p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button type="button" onclick="closeModal()"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Cancel
+                </button>
+                <button type="button" onclick="addToBaskets()"
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent">
+                    Add to Basket(s)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var partId = /*[[${part.id}]]*/ 0;
+
+        function closeModal() {
+            document.getElementById('modal-container').innerHTML = '';
+        }
+
+        function toggleNewBasketForm() {
+            const checkbox = document.getElementById('create-new-basket');
+            const form = document.getElementById('new-basket-form');
+
+            if (checkbox.checked) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+
+        function addToBaskets() {
+            const selectedBaskets = Array.from(document.querySelectorAll('input[name="selectedBaskets"]:checked'))
+                .map(cb => cb.value);
+            const createNew = document.getElementById('create-new-basket').checked;
+            const quantity = document.getElementById('part-quantity').value;
+
+            if (selectedBaskets.length === 0 && !createNew) {
+                alert('Please select at least one basket or create a new one.');
+                return;
+            }
+
+            if (createNew) {
+                const basketName = document.getElementById('new-basket-name').value.trim();
+                if (!basketName) {
+                    alert('Please enter a basket name.');
+                    return;
+                }
+
+                // Create new basket first, then add part
+                createBasketAndAddPart(basketName, document.getElementById('new-basket-description').value.trim(), partId, quantity);
+            }
+
+            // Add to existing baskets
+            selectedBaskets.forEach(basketId => {
+                addPartToBasket(basketId, partId, quantity);
+            });
+
+            closeModal();
+        }
+
+        function createBasketAndAddPart(name, description, partId, quantity) {
+            fetch('/baskets/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'name=' + encodeURIComponent(name) + '&description=' + encodeURIComponent(description)
+            })
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes('successfully')) {
+                        // Get the newly created basket ID and add the part
+                        // For now, we'll just show a success message
+                        showMessage('Basket created and part added successfully!', 'success');
+                    } else {
+                        showMessage('Error creating basket: ' + data, 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error creating basket: ' + error, 'error');
+                });
+        }
+
+        function addPartToBasket(basketId, partId, quantity) {
+            fetch('/baskets/' + basketId + '/add-part', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'partId=' + partId + '&quantity=' + quantity
+            })
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes('successfully')) {
+                        showMessage('Part added to basket successfully!', 'success');
+                    } else {
+                        showMessage('Error adding part to basket: ' + data, 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error adding part to basket: ' + error, 'error');
+                });
+        }
+
+        function showMessage(message, type) {
+            // Create a toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 p-4 rounded shadow-lg z-50 ' +
+                (type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }
+        /*]]>*/
+    </script>
+</div>
+
+</html>

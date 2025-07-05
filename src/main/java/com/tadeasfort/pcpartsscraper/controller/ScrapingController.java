@@ -1,7 +1,7 @@
 package com.tadeasfort.pcpartsscraper.controller;
 
 import com.tadeasfort.pcpartsscraper.model.Part;
-import com.tadeasfort.pcpartsscraper.service.scraping.Bazos;
+import com.tadeasfort.pcpartsscraper.service.scraping.BazosScrapingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ScrapingController {
 
-    private final Bazos bazosService;
+    private final BazosScrapingService bazosService;
 
     @GetMapping("/bazos")
     public String scrapeBazos() {
