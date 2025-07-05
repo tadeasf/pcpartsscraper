@@ -1,0 +1,160 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: "24"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create deployment compose file
+        run: |
+          cat > compose-deployment.yaml << 'EOF'
+          services:
+            postgres:
+              image: 'postgres:latest'
+              environment:
+                - 'POSTGRES_DB=pcpartsdb'
+                - 'POSTGRES_PASSWORD=pcparts_password'
+                - 'POSTGRES_USER=pcparts_user'
+              ports:
+                - '5432:5432'
+              volumes:
+                - 'postgres_data:/var/lib/postgresql/data'
+
+            redis:
+              image: 'redis:latest'
+              ports:
+                - '6379:6379'
+              volumes:
+                - 'redis_data:/data'
+
+            scraper:
+              image: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}'
+              ports:
+                - '8080:8080'
+              depends_on:
+                - postgres
+                - redis
+              environment:
+                - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/pcpartsdb'
+                - 'SPRING_DATASOURCE_USERNAME=pcparts_user'
+                - 'SPRING_DATASOURCE_PASSWORD=pcparts_password'
+              restart: unless-stopped
+
+          volumes:
+            postgres_data:
+            redis_data:
+          EOF
+
+      - name: Create README for deployment
+        run: |
+          cat > DEPLOYMENT.md << 'EOF'
+          # PC Parts Scraper Deployment
+
+          ## Quick Start with Docker Compose
+
+          1. Download the `compose-deployment.yaml` file from this release
+          2. Run the following command:
+             ```bash
+             docker compose -f compose-deployment.yaml up -d
+             ```
+          3. Access the application at http://localhost:8080
+
+          ## Alternative: JAR Deployment
+
+          1. Download the JAR file from this release
+          2. Ensure you have Java 24+ installed
+          3. Set up PostgreSQL and Redis (or use the provided compose.yaml for just the databases)
+          4. Run with:
+             ```bash
+             java -jar pcpartsscraper-*.jar
+             ```
+
+          ## Configuration
+
+          The application uses the following default database configuration:
+          - Database: `pcpartsdb`
+          - Username: `pcparts_user`
+          - Password: `pcparts_password`
+
+          You can override these by setting environment variables:
+          - `SPRING_DATASOURCE_URL`
+          - `SPRING_DATASOURCE_USERNAME`
+          - `SPRING_DATASOURCE_PASSWORD`
+
+          ## Docker Image
+
+          The Docker image is also available at:
+          `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}`
+
+          ## Support
+
+          For issues and questions, please visit the [GitHub repository](${{ github.server_url }}/${{ github.repository }}).
+          EOF
+
+      - name: Create GitHub Release
+        uses: ghalactic/github-release-from-tag@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          prerelease: false
+          draft: false
+          assets: |
+            build/libs/*.jar
+            compose-deployment.yaml
+            DEPLOYMENT.md
+            compose.yaml
