@@ -91,8 +91,9 @@
                     </a>
 
                     <!-- Add to Basket -->
-                    <button th:if="${part.price != null}" hx-get="/baskets/modal/add-part/{partId}(partId=${part.id})"
-                        hx-target="#modal-container" hx-swap="innerHTML"
+                    <button th:if="${part.price != null}"
+                        th:hx-get="@{/baskets/modal/add-part/{partId}(partId=${part.id})}" hx-target="#modal-container"
+                        hx-swap="innerHTML"
                         class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
                         Add to Basket
                     </button>
