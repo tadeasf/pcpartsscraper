@@ -61,8 +61,8 @@ public class BasketController {
                     .active(true)
                     .build();
 
-            basketRepository.save(basket);
-            return ResponseEntity.ok("Basket created successfully");
+            basket = basketRepository.save(basket);
+            return ResponseEntity.ok(basket.getId().toString());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error creating basket: " + e.getMessage());
         }
@@ -72,8 +72,7 @@ public class BasketController {
     @ResponseBody
     @Transactional
     public ResponseEntity<String> addPartToBasket(@PathVariable Long id,
-            @RequestParam Long partId,
-            @RequestParam(defaultValue = "1") Integer quantity) {
+            @RequestParam Long partId) {
         try {
             Optional<PCBasket> basketOpt = basketRepository.findByIdAndActiveTrue(id);
             if (basketOpt.isEmpty()) {
@@ -94,15 +93,14 @@ public class BasketController {
                     .findFirst();
 
             if (existingItem.isPresent()) {
-                // Update quantity
-                BasketItem item = existingItem.get();
-                item.setQuantity(item.getQuantity() + quantity);
+                // For marketplace listings, don't allow duplicates since each listing is unique
+                return ResponseEntity.badRequest().body("This part is already in your basket");
             } else {
-                // Add new item
+                // Add new item (always quantity 1 for unique marketplace listings)
                 BasketItem item = BasketItem.builder()
                         .basket(basket)
                         .part(part)
-                        .quantity(quantity)
+                        .quantity(1)
                         .priceAtTime(part.getPrice())
                         .addedAt(LocalDateTime.now())
                         .build();
@@ -137,40 +135,8 @@ public class BasketController {
         }
     }
 
-    @PutMapping("/{basketId}/items/{itemId}/quantity")
-    @ResponseBody
-    @Transactional
-    public ResponseEntity<String> updateItemQuantity(@PathVariable Long basketId,
-            @PathVariable Long itemId,
-            @RequestParam Integer quantity) {
-        try {
-            if (quantity <= 0) {
-                return ResponseEntity.badRequest().body("Quantity must be greater than 0");
-            }
-
-            Optional<PCBasket> basketOpt = basketRepository.findByIdAndActiveTrue(basketId);
-            if (basketOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Basket not found");
-            }
-
-            PCBasket basket = basketOpt.get();
-            Optional<BasketItem> itemOpt = basket.getItems().stream()
-                    .filter(item -> item.getId().equals(itemId))
-                    .findFirst();
-
-            if (itemOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Item not found in basket");
-            }
-
-            BasketItem item = itemOpt.get();
-            item.setQuantity(quantity);
-
-            basketRepository.save(basket);
-            return ResponseEntity.ok("Item quantity updated successfully");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error updating item quantity: " + e.getMessage());
-        }
-    }
+    // Quantity updates removed - marketplace listings are unique items with
+    // quantity always 1
 
     @DeleteMapping("/{id}")
     @ResponseBody

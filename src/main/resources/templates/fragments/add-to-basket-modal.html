@@ -94,14 +94,7 @@
                     </div>
                 </div>
 
-                <!-- Quantity -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Quantity
-                    </label>
-                    <input type="number" id="part-quantity" value="1" min="1"
-                        class="w-20 p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                </div>
+
             </div>
 
             <!-- Modal Footer -->
@@ -141,7 +134,7 @@
             const selectedBaskets = Array.from(document.querySelectorAll('input[name="selectedBaskets"]:checked'))
                 .map(cb => cb.value);
             const createNew = document.getElementById('create-new-basket').checked;
-            const quantity = document.getElementById('part-quantity').value;
+            const quantity = 1; // Always 1 for unique marketplace listings
 
             if (selectedBaskets.length === 0 && !createNew) {
                 alert('Please select at least one basket or create a new one.');
@@ -156,18 +149,18 @@
                 }
 
                 // Create new basket first, then add part
-                createBasketAndAddPart(basketName, document.getElementById('new-basket-description').value.trim(), partId, quantity);
+                createBasketAndAddPart(basketName, document.getElementById('new-basket-description').value.trim(), partId);
             }
 
             // Add to existing baskets
             selectedBaskets.forEach(basketId => {
-                addPartToBasket(basketId, partId, quantity);
+                addPartToBasket(basketId, partId);
             });
 
             closeModal();
         }
 
-        function createBasketAndAddPart(name, description, partId, quantity) {
+        function createBasketAndAddPart(name, description, partId) {
             fetch('/baskets/create', {
                 method: 'POST',
                 headers: {
@@ -176,13 +169,13 @@
                 body: 'name=' + encodeURIComponent(name) + '&description=' + encodeURIComponent(description)
             })
                 .then(response => response.text())
-                .then(data => {
-                    if (data.includes('successfully')) {
-                        // Get the newly created basket ID and add the part
-                        // For now, we'll just show a success message
+                .then(basketId => {
+                    if (!isNaN(basketId)) {
+                        // Successfully created basket, now add the part
+                        addPartToBasket(basketId, partId);
                         showMessage('Basket created and part added successfully!', 'success');
                     } else {
-                        showMessage('Error creating basket: ' + data, 'error');
+                        showMessage('Error creating basket: ' + basketId, 'error');
                     }
                 })
                 .catch(error => {
@@ -190,13 +183,13 @@
                 });
         }
 
-        function addPartToBasket(basketId, partId, quantity) {
+        function addPartToBasket(basketId, partId) {
             fetch('/baskets/' + basketId + '/add-part', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: 'partId=' + partId + '&quantity=' + quantity
+                body: 'partId=' + partId
             })
                 .then(response => response.text())
                 .then(data => {
