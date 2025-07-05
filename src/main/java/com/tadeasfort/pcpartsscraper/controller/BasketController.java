@@ -28,6 +28,8 @@ public class BasketController {
     @Transactional(readOnly = true)
     public String baskets(Model model) {
         List<PCBasket> baskets = basketRepository.findAllByActiveTrueOrderByCreatedAtDesc();
+        model.addAttribute("currentPage", "baskets");
+        model.addAttribute("title", "My Baskets");
         model.addAttribute("baskets", baskets);
         return "baskets";
     }
@@ -40,7 +42,10 @@ public class BasketController {
             return "redirect:/baskets";
         }
 
-        model.addAttribute("basket", basketOpt.get());
+        PCBasket basket = basketOpt.get();
+        model.addAttribute("currentPage", "baskets");
+        model.addAttribute("title", basket.getName());
+        model.addAttribute("basket", basket);
         return "basket-details";
     }
 

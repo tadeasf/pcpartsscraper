@@ -42,6 +42,8 @@ public class MainController {
         // Get latest parts
         List<Part> latestParts = partRepository.findLatestParts(PageRequest.of(0, 5));
 
+        model.addAttribute("currentPage", "dashboard");
+        model.addAttribute("title", "Dashboard");
         model.addAttribute("totalParts", totalParts);
         model.addAttribute("sources", sources);
         model.addAttribute("marketplaces", marketplaces);
@@ -93,6 +95,8 @@ public class MainController {
         List<String> sources = partRepository.findDistinctSources();
         List<String> marketplaces = partRepository.findDistinctMarketplaces();
 
+        model.addAttribute("currentPage", "parts");
+        model.addAttribute("title", "Browse Parts");
         model.addAttribute("partsPage", partsPage);
         model.addAttribute("sources", sources);
         model.addAttribute("marketplaces", marketplaces);

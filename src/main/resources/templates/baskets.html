@@ -19,14 +19,8 @@
         }
     </script>
 
-    <!-- Load theme on page load -->
-    <script>
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    </script>
+    <!-- Theme initialization -->
+    <script th:replace="~{fragments/theme-toggle :: theme-init-script}"></script>
 
     <style>
         /* Remove all border-radius */
@@ -39,32 +33,7 @@
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <div class="min-h-screen flex flex-col max-w-7xl mx-auto">
         <!-- Header -->
-        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-            <div class="px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <div class="flex items-center">
-                        <a href="/" class="text-xl font-bold text-blue-600 dark:text-blue-400">
-                            PC Parts Scraper
-                        </a>
-                    </div>
-
-                    <nav class="flex space-x-4">
-                        <a href="/"
-                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
-                            Dashboard
-                        </a>
-                        <a href="/parts"
-                            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium">
-                            Browse Parts
-                        </a>
-                        <a href="/baskets"
-                            class="text-blue-600 dark:text-blue-400 px-3 py-2 text-sm font-medium border-b-2 border-blue-600 dark:border-blue-400">
-                            My Baskets
-                        </a>
-                    </nav>
-                </div>
-            </div>
-        </header>
+        <div th:replace="~{fragments/header :: header('baskets')}"></div>
 
         <!-- Main Content -->
         <main class="flex-1 px-4 sm:px-6 lg:px-8 py-8">
@@ -86,73 +55,19 @@
         </main>
 
         <!-- Footer -->
-        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-            <div class="px-4 sm:px-6 lg:px-8 py-4">
-                <div class="text-center text-sm text-gray-500 dark:text-gray-400">
-                    <p>&copy; 2024 PC Parts Scraper. Built with Spring Boot + HTMX + Tailwind CSS.</p>
-                </div>
-            </div>
-        </footer>
+        <div th:replace="~{fragments/footer :: footer}"></div>
     </div>
 
     <!-- Modal Container -->
     <div id="modal-container"></div>
 
-    <!-- Dark mode toggle -->
-    <div class="fixed bottom-4 right-4">
-        <button id="theme-toggle" type="button"
-            class="bg-gray-200 dark:bg-gray-700 p-3 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-            </svg>
-            <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                    clip-rule="evenodd"></path>
-            </svg>
-        </button>
-    </div>
+    <!-- Theme Toggle -->
+    <div th:replace="~{fragments/theme-toggle :: theme-toggle}"></div>
+
+    <!-- Theme Toggle Script -->
+    <script th:replace="~{fragments/theme-toggle :: theme-toggle-script}"></script>
 
     <script>
-        // Dark mode toggle functionality
-        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-        // Change the icons inside the button based on previous settings
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            themeToggleLightIcon.classList.remove('hidden');
-        } else {
-            themeToggleDarkIcon.classList.remove('hidden');
-        }
-
-        var themeToggleBtn = document.getElementById('theme-toggle');
-
-        themeToggleBtn.addEventListener('click', function () {
-            // Toggle icons inside button
-            themeToggleDarkIcon.classList.toggle('hidden');
-            themeToggleLightIcon.classList.toggle('hidden');
-
-            // If set via local storage previously
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                }
-                // If NOT set via local storage previously
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                }
-            }
-        });
-
         function showCreateBasketModal() {
             const modal = `
                 <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
