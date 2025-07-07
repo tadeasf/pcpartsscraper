@@ -26,7 +26,9 @@ WORKDIR /app
 
 # Install curl for health checks and clean up
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
