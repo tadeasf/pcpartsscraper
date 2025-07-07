@@ -59,6 +59,22 @@ public class BazosScrapingService implements MarketplaceService {
     @Value("${app.scraping.bazos.duplicate-stop-threshold:0.8}")
     private double duplicateStopThreshold;
 
+    // Add configurable delays for performance tuning
+    @Value("${app.scraping.bazos.listing-delay-ms:50}")
+    private int listingDelayMs;
+
+    @Value("${app.scraping.bazos.page-delay-ms:300}")
+    private int pageDelayMs;
+
+    @Value("${app.scraping.bazos.category-delay-ms:500}")
+    private int categoryDelayMs;
+
+    @Value("${app.scraping.bazos.connect-timeout-ms:5000}")
+    private int connectTimeoutMs;
+
+    @Value("${app.scraping.bazos.use-tor:false}")
+    private boolean useTorForBazos;
+
     @Override
     public String getMarketplaceName() {
         return "bazos";
@@ -94,8 +110,7 @@ public class BazosScrapingService implements MarketplaceService {
 
     // Reuse connection for better performance
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
-    private static final int CONNECT_TIMEOUT = 10000; // Reduced from 15000 - this applies to both connect and read
-                                                      // timeouts
+    // Remove the hardcoded timeout - now configurable
 
     public void scrapeCategory(Part.PartType partType, String categoryPath) {
         if (!scrapingEnabled) {
@@ -103,7 +118,11 @@ public class BazosScrapingService implements MarketplaceService {
             return;
         }
 
-        log.info("Starting scraping for category: {} at path: {}", partType, categoryPath);
+        log.info(
+                "Starting scraping for category: {} at path: {} (delays: listing={}ms, page={}ms, timeout={}ms, tor={})",
+                partType, categoryPath, listingDelayMs, pageDelayMs, connectTimeoutMs, useTorForBazos);
+
+        long startTime = System.currentTimeMillis();
 
         try {
             int page = 1;
@@ -133,7 +152,7 @@ public class BazosScrapingService implements MarketplaceService {
                         if (part != null) {
                             pageScrapedParts.add(part);
                         }
-                        Thread.sleep(200); // Reduced from 500ms to 200ms for better performance
+                        Thread.sleep(listingDelayMs); // Use configurable delay instead of hardcoded 200ms
                     } catch (Exception e) {
                         log.warn("Error scraping individual listing {}: {}", listingUrl, e.getMessage());
                     }
@@ -187,10 +206,15 @@ public class BazosScrapingService implements MarketplaceService {
                 }
 
                 page++;
-                Thread.sleep(1500); // Reduced from 2000ms to 1500ms for better performance
+                Thread.sleep(pageDelayMs); // Use configurable delay instead of hardcoded 1500ms
             }
 
             log.info("Scraped and saved {} new parts for {}", totalScraped, partType);
+
+            long endTime = System.currentTimeMillis();
+            long durationSeconds = (endTime - startTime) / 1000;
+            log.info("Category {} completed in {}s ({} parts/min)", partType, durationSeconds,
+                    durationSeconds > 0 ? (totalScraped * 60 / durationSeconds) : 0);
 
         } catch (Exception e) {
             log.error("Error scraping category {}: {}", partType, e.getMessage(), e);
@@ -253,10 +277,12 @@ public class BazosScrapingService implements MarketplaceService {
                     // Extract component information for newly saved parts
                     for (Part savedPart : savedParts) {
                         try {
+                            // Make component extraction non-blocking and optional
                             componentExtractionService.extractAndUpdatePartInfo(savedPart);
                         } catch (Exception ex) {
                             log.debug("Failed to extract component info for part {}: {}", savedPart.getId(),
                                     ex.getMessage());
+                            // Don't let component extraction failures stop the scraping process
                         }
                     }
                 } catch (Exception e) {
@@ -323,7 +349,7 @@ public class BazosScrapingService implements MarketplaceService {
         for (Map.Entry<Part.PartType, String> entry : CATEGORY_MAPPINGS.entrySet()) {
             try {
                 scrapeCategory(entry.getKey(), entry.getValue());
-                Thread.sleep(3000); // Wait between categories
+                Thread.sleep(categoryDelayMs); // Use configurable delay instead of hardcoded 3000ms
             } catch (Exception e) {
                 log.error("Error scraping category {}: {}", entry.getKey(), e.getMessage());
             }
@@ -631,14 +657,16 @@ public class BazosScrapingService implements MarketplaceService {
     private org.jsoup.Connection createJsoupConnection(String url) {
         org.jsoup.Connection connection = Jsoup.connect(url)
                 .userAgent(USER_AGENT)
-                .timeout(CONNECT_TIMEOUT)
+                .timeout(connectTimeoutMs) // Use configurable timeout
                 .followRedirects(true);
 
-        // Add Tor proxy if enabled
-        java.net.Proxy proxy = torProxyService.getTorProxy();
-        if (proxy != null) {
-            connection.proxy(proxy);
-            log.debug("Using Tor proxy for request to: {}", url);
+        // Add Tor proxy only if specifically enabled for Bazos scraping
+        if (useTorForBazos) {
+            java.net.Proxy proxy = torProxyService.getTorProxy();
+            if (proxy != null) {
+                connection.proxy(proxy);
+                log.debug("Using Tor proxy for request to: {}", url);
+            }
         }
 
         return connection;
