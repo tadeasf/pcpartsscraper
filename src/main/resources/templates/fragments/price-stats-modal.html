@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="price-stats-modal" id="price-stats-modal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div
+        class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+
+        <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100" id="modal-title">Price Statistics</h3>
+            <button onclick="closePriceStatisticsModal()"
+                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="py-4">
+            <!-- Loading Indicator -->
+            <div id="stats-loading" class="py-8 text-center">
+                <div class="inline-block animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                <span class="ml-2 text-gray-600 dark:text-gray-400">Loading price statistics...</span>
+            </div>
+
+            <!-- Error Message -->
+            <div id="stats-error" class="py-8 text-center hidden">
+                <svg class="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="mt-2 text-red-500" id="error-message">Failed to load price statistics.</p>
+            </div>
+
+            <!-- Statistics Content -->
+            <div id="stats-content" class="space-y-6 hidden">
+                <!-- Price Statistics Summary -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 text-center">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Average Price</div>
+                        <div class="text-lg font-bold text-gray-900 dark:text-gray-100" id="average-price">0 CZK</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400" id="average-note"></div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 text-center">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Median Price</div>
+                        <div class="text-lg font-bold text-gray-900 dark:text-gray-100" id="median-price">0 CZK</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 text-center">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Lowest Price</div>
+                        <div class="text-lg font-bold text-green-600 dark:text-green-400" id="min-price">0 CZK</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 text-center">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Highest Price</div>
+                        <div class="text-lg font-bold text-red-600 dark:text-red-400" id="max-price">0 CZK</div>
+                    </div>
+                </div>
+
+                <!-- Additional Statistics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Listings</div>
+                        <div class="text-lg font-bold text-gray-900 dark:text-gray-100" id="total-listings">0</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Active Listings</div>
+                        <div class="text-lg font-bold text-gray-900 dark:text-gray-100" id="active-listings">0</div>
+                    </div>
+                </div>
+
+                <!-- Price Distribution Chart -->
+                <div class="mt-4">
+                    <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">Price Distribution</h4>
+                    <div class="bg-white dark:bg-gray-700 p-4 h-64">
+                        <canvas id="price-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Price Trend Over Time (placeholder for future) -->
+                <div class="mt-4">
+                    <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">Price Trend (Last 30 Days)
+                    </h4>
+                    <div class="bg-white dark:bg-gray-700 p-4 h-48">
+                        <canvas id="trend-chart"></canvas>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                        Note: Price trend data is simulated as historical data is not yet available.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button onclick="closePriceStatisticsModal()"
+                class="px-4 py-2 text-sm font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+</html>

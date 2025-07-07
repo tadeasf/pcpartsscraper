@@ -97,4 +97,12 @@ public interface PartRepository extends JpaRepository<Part, Long> {
         Page<Part> findByActiveTrueAndItemType(String itemType, Pageable pageable);
 
         Page<Part> findByActiveTrueAndModelName(String modelName, Pageable pageable);
+
+        List<Part> findByScrapedAtAfter(LocalDateTime time);
+
+        List<Part> findByModelNameAndItemTypeAndPriceIsNotNullAndActive(String modelName, String itemType,
+                        Boolean active);
+
+        @Query("SELECT DISTINCT p.modelName FROM Part p WHERE p.itemType = :itemType AND p.modelName IS NOT NULL ORDER BY p.modelName ASC")
+        List<String> findDistinctModelNamesByItemTypeOrderByModelName(@Param("itemType") String itemType);
 }

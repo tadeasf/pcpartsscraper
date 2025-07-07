@@ -2,6 +2,8 @@
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
+gradle-app.setting
+!gradle-app.setting
 
 # IDE
 .idea/
@@ -20,7 +22,39 @@ Thumbs.db
 
 # Documentation
 README.md
+RELEASE.md
+todo.md
 *.md
 
+# Docker
+Dockerfile
+docker-compose.yml
+compose.yaml
+
 # Logs
+logs/
 *.log
+
+# Temporary files
+tmp/
+temp/
+
+# Node modules (if any)
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Database files
+*.db
+*.sqlite
+
+# Test results
+test-results/
+coverage/
+
+# Application specific
+uploads/
+downloads/

@@ -4,11 +4,14 @@ import com.tadeasfort.pcpartsscraper.model.Part;
 import com.tadeasfort.pcpartsscraper.service.scraping.BazosScrapingService;
 import com.tadeasfort.pcpartsscraper.service.scraping.PartTypeScrapingJob;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/scraping")
 @RequiredArgsConstructor
+@Slf4j
 public class ScrapingController {
 
     private final BazosScrapingService bazosService;
@@ -83,4 +86,50 @@ public class ScrapingController {
             return "Component database update failed: " + e.getMessage();
         }
     }
+
+    @GetMapping("/scrape/components/{year}")
+    public ResponseEntity<String> scrapeComponents(@PathVariable int year) {
+        try {
+            partTypeScrapingJob.scrapeComponentsForYear(year);
+            return ResponseEntity.ok("Started scraping components for year " + year);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/scrape/process-new-parts")
+    public ResponseEntity<String> processNewParts() {
+        try {
+            partTypeScrapingJob.processNewParts();
+            return ResponseEntity.ok("Started processing new parts");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/scrape/price-statistics")
+    public ResponseEntity<String> calculatePriceStatistics() {
+        try {
+            partTypeScrapingJob.calculatePriceStatistics();
+            return ResponseEntity.ok("Started calculating price statistics");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/extract-components")
+    public ResponseEntity<String> extractComponents() {
+        try {
+            log.info("Manual component extraction triggered via web interface");
+
+            // Call the processNewParts method to extract component info from existing parts
+            partTypeScrapingJob.processNewParts();
+
+            return ResponseEntity.ok("Component extraction job started successfully. Check the logs for progress.");
+        } catch (Exception e) {
+            log.error("Error triggering component extraction: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
+
 }

@@ -291,12 +291,12 @@ public class PartTypeScrapingJob {
         JobStatus jobStatus = initializeJobStatus();
 
         try {
-            // Scrape last 5 years for initial population (NO @Transactional - HTTP
+            // Scrape last 15 years for initial population (NO @Transactional - HTTP
             // operations)
             int currentYear = LocalDateTime.now().getYear();
             int successfulYears = 0;
 
-            for (int year = currentYear - 4; year <= currentYear; year++) {
+            for (int year = currentYear - 14; year <= currentYear; year++) {
                 try {
                     scrapeAndUpdateComponentsForYear(year);
                     successfulYears++;

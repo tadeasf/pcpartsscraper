@@ -64,7 +64,8 @@
                                     CZK</span>
 
                                 <!-- Price comparison indicator -->
-                                <span th:if="${part.price.compareTo(stats.averagePrice) < 0}"
+                                <span
+                                    th:if="${part.price.compareTo(stats.averagePrice) < 0 and stats.averagePrice.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                                     class="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-medium">
                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
@@ -76,7 +77,8 @@
                                         below avg</span>
                                 </span>
 
-                                <span th:if="${part.price.compareTo(stats.averagePrice) > 0}"
+                                <span
+                                    th:if="${part.price.compareTo(stats.averagePrice) > 0 and stats.averagePrice.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                                     class="inline-flex items-center px-1.5 py-0.5 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-xs font-medium">
                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
@@ -183,6 +185,17 @@
                         class="flex-1 bg-gray-400 text-white text-center py-2 px-3 text-sm font-medium cursor-not-allowed">
                         Price on Request
                     </button>
+
+                    <!-- Price Statistics Chart Button -->
+                    <button th:if="${part.modelName != null and part.itemType != null}"
+                        th:data-model-name="${part.modelName}" th:data-item-type="${part.itemType}"
+                        class="price-stats-btn flex-1 bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-3 text-sm font-medium transition-colors">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+                            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+                        </svg>
+                        Stats
+                    </button>
                 </div>
             </div>
         </div>
@@ -205,12 +218,14 @@
         <!-- Results Info -->
         <div class="flex-1 flex justify-between sm:hidden">
             <button th:if="${!partsPage.first}" hx-get="/parts/fragment" hx-include="#filterForm"
-                th:hx-vals="|{'page': '${partsPage.number - 1}'}|" hx-target="#parts-container" hx-indicator="#loading"
+                th:hx-vals="|{&quot;page&quot;: ${partsPage.number - 1}}|" hx-target="#parts-container"
+                hx-indicator="#loading"
                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Previous
             </button>
             <button th:if="${!partsPage.last}" hx-get="/parts/fragment" hx-include="#filterForm"
-                th:hx-vals="|{'page': '${partsPage.number + 1}'}|" hx-target="#parts-container" hx-indicator="#loading"
+                th:hx-vals="|{&quot;page&quot;: ${partsPage.number + 1}}|" hx-target="#parts-container"
+                hx-indicator="#loading"
                 class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Next
             </button>
@@ -235,7 +250,7 @@
                 <nav class="relative z-0 inline-flex shadow-sm -space-x-px" aria-label="Pagination">
                     <!-- Previous Button -->
                     <button th:if="${!partsPage.first}" hx-get="/parts/fragment" hx-include="#filterForm"
-                        th:hx-vals="|{'page': '${partsPage.number - 1}'}|" hx-target="#parts-container"
+                        th:hx-vals="|{&quot;page&quot;: ${partsPage.number - 1}}|" hx-target="#parts-container"
                         hx-indicator="#loading"
                         class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         Previous
@@ -249,7 +264,8 @@
                             <span th:text="${pageNum + 1}">1</span>
                         </button>
                         <button th:if="${pageNum != partsPage.number}" hx-get="/parts/fragment" hx-include="#filterForm"
-                            th:hx-vals="|{'page': '${pageNum}'}|" hx-target="#parts-container" hx-indicator="#loading"
+                            th:hx-vals="|{&quot;page&quot;: ${pageNum}}|" hx-target="#parts-container"
+                            hx-indicator="#loading"
                             class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                             <span th:text="${pageNum + 1}">1</span>
                         </button>
@@ -257,7 +273,7 @@
 
                     <!-- Next Button -->
                     <button th:if="${!partsPage.last}" hx-get="/parts/fragment" hx-include="#filterForm"
-                        th:hx-vals="|{'page': '${partsPage.number + 1}'}|" hx-target="#parts-container"
+                        th:hx-vals="|{&quot;page&quot;: ${partsPage.number + 1}}|" hx-target="#parts-container"
                         hx-indicator="#loading"
                         class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         Next
