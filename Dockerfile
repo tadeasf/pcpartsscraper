@@ -1,5 +1,5 @@
 # Build stage
-FROM openjdk:24-jdk-slim AS builder
+FROM eclipse-temurin:24.0.1_9-jdk AS builder
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ COPY src/ src/
 RUN ./gradlew build -x test --no-daemon
 
 # Runtime stage
-FROM openjdk:24-jre-slim
+FROM eclipse-temurin:24.0.1_9-jdk
 
 WORKDIR /app
 
