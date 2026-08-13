@@ -37,7 +37,7 @@ dependencies {
 	implementation 'io.github.wimdeblauwe:htmx-spring-boot-thymeleaf:4.0.1'
 	
 	// Web Scraping
-	implementation 'org.jsoup:jsoup:1.18.3'
+	implementation 'org.jsoup:jsoup:1.23.1'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	
 	// Tor Proxy Support
